@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard — Healthcare System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="navbar-brand">
+    <div class="navbar-logo">🏥</div>
+    <h1>Healthcare Management System</h1>
+  </div>
+  <div class="navbar-right">
+    <span class="nav-badge">AI Powered</span>
+    <button id="themeToggle">🌙</button>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  <div class="dashboard-header">
+    <div>
+      <h1>Select a Diagnostic</h1>
+      <p>Choose a disease module to begin AI-powered analysis</p>
+    </div>
+    <span class="dashboard-tag">3 modules available</span>
+  </div>
+
+  <div class="card-grid">
+
+    <a href="/disease1" class="disease-card card-heart">
+      <div class="card-icon-wrap">❤️</div>
+      <h3>Heart Disease</h3>
+      <p>Assess cardiovascular risk using age, blood pressure, cholesterol, and heart rate data.</p>
+      <div class="card-meta">
+        <span class="card-tag">Numerical Input</span>
+        <span class="card-tag">Instant</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="/disease2" class="disease-card card-lung">
+      <div class="card-icon-wrap">🫁</div>
+      <h3>Lung Cancer</h3>
+      <p>Deep learning analysis of CT scan images to detect pulmonary abnormalities.</p>
+      <div class="card-meta">
+        <span class="card-tag">CT Scan</span>
+        <span class="card-tag">Image AI</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="/disease3" class="disease-card card-brain">
+      <div class="card-icon-wrap">🧠</div>
+      <h3>Brain Tumor</h3>
+      <p>MRI-based neural network detection for identifying tumor presence and classification.</p>
+      <div class="card-meta">
+        <span class="card-tag">MRI Scan</span>
+        <span class="card-tag">Image AI</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

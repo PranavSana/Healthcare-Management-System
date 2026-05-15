@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Heart Disease — Healthcare Management System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="navbar-brand">
+    <div class="navbar-logo">🏥</div>
+    <h1>Healthcare Management System</h1>
+  </div>
+  <div class="navbar-right">
+    <span class="nav-badge">AI Powered</span>
+    <button id="themeToggle">🌙</button>
+  </div>
+</div>
+
+<div class="page-wrapper">
+  <div class="form-page">
+
+    <div class="form-page-header">
+      <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+      <h1>❤️ Heart Disease Prediction</h1>
+      <p>Enter patient vitals to assess cardiovascular risk using our AI model.</p>
+    </div>
+
+    <div class="form-card">
+      <form method="post" id="heartForm">
+
+        <!-- PATIENT NAME -->
+        <div class="form-group">
+          <label class="form-label">Patient Name</label>
+          <input class="form-input" type="text" name="patient_name" id="patient_name"
+                 placeholder="e.g. John Smith" maxlength="80">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Age</label>
+          <input class="form-input" type="number" name="age" id="age"
+                 placeholder="e.g. 45" min="1" max="120" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Blood Pressure (mmHg)</label>
+          <input class="form-input" type="number" name="blood_pressure" id="blood_pressure"
+                 placeholder="e.g. 120" min="50" max="250" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cholesterol (mg/dL)</label>
+          <input class="form-input" type="number" name="cholesterol" id="cholesterol"
+                 placeholder="e.g. 200" min="100" max="600" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Resting Heart Rate (bpm)</label>
+          <input class="form-input" type="number" name="heart_rate" id="heart_rate"
+                 placeholder="e.g. 72" min="30" max="250" required>
+        </div>
+
+        <button type="submit" class="btn btn-full" id="submitBtn">
+          Run Prediction →
+        </button>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+  document.getElementById('heartForm').addEventListener('submit', function() {
+    sessionStorage.setItem('report_module',     'heart');
+    sessionStorage.setItem('report_age',        document.getElementById('age').value);
+    sessionStorage.setItem('report_bp',         document.getElementById('blood_pressure').value);
+    sessionStorage.setItem('report_cholesterol',document.getElementById('cholesterol').value);
+    sessionStorage.setItem('report_heart_rate', document.getElementById('heart_rate').value);
+    sessionStorage.removeItem('report_image');
+
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = 'Analyzing...';
+    btn.disabled = true;
+  });
+</script>
+</body>
+</html>

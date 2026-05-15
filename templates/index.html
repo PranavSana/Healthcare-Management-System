@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HMS — Healthcare Management System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="navbar-brand">
+    <div class="navbar-logo">🏥</div>
+    <h1>Healthcare Management System</h1>
+  </div>
+  <div class="navbar-right">
+    <span class="nav-badge">AI Powered</span>
+    <button id="themeToggle">🌙</button>
+  </div>
+</div>
+
+<div class="page-wrapper">
+  <div class="hero">
+
+    <div class="hero-eyebrow">Multi-Disease Detection Platform</div>
+
+    <h1>AI-Driven<br>Healthcare Diagnostics</h1>
+
+    <p>Advanced deep learning models for early detection of heart disease, lung cancer, and brain tumors — fast, accurate, and accessible.</p>
+
+    <a href="/dashboard" class="btn">
+      Open Dashboard
+      <span>→</span>
+    </a>
+
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Diseases</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">AI</div>
+        <div class="stat-label">Powered</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">~5s</div>
+        <div class="stat-label">Analysis</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

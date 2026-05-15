@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Result — Healthcare Management System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* ── PRINT ── */
+    @media print {
+      body * { visibility: hidden; }
+      #printReport, #printReport * { visibility: visible; }
+      #printReport {
+        position: fixed; inset: 0;
+        margin: 0; padding: 0;
+        background: white; color: #000;
+      }
+    }
+
+    /* ── MODAL OVERLAY ── */
+    .report-modal-bg {
+      display: none;
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(8,14,26,0.75);
+      backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .report-modal-bg.open { display: flex; }
+
+    /* ── REPORT CARD ── */
+    #printReport {
+      background: #fff; color: #111;
+      border-radius: 20px;
+      padding: 48px 52px;
+      max-width: 700px; width: 100%;
+      max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+      font-family: 'Sora', Arial, sans-serif;
+      position: relative;
+    }
+
+    .rpt-close {
+      position: absolute; top: 16px; right: 20px;
+      background: #f1f5f9; border: none; border-radius: 8px;
+      width: 32px; height: 32px; font-size: 16px;
+      cursor: pointer; color: #444;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── REPORT HEADER ── */
+    .rpt-header {
+      display: flex; align-items: center; gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+    .rpt-logo {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, #1d4ed8, #06b6d4);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+    .rpt-org  { font-size: 18px; font-weight: 700; color: #0f1c2e; letter-spacing: -0.3px; }
+    .rpt-sub  { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+    /* ── REPORT ID ROW ── */
+    .rpt-id-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: #64748b;
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 10px; padding: 10px 14px;
+      margin-bottom: 20px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .rpt-id-badge {
+      font-weight: 700; color: #1d4ed8;
+      font-size: 13px;
+    }
+
+    /* ── PATIENT ROW ── */
+    .rpt-patient-row {
+      display: flex; gap: 12px;
+      margin-bottom: 24px;
+    }
+    .rpt-patient-item {
+      flex: 1; background: #f8fafc;
+      border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 12px 16px;
+    }
+    .rpt-patient-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: #94a3b8; margin-bottom: 4px;
+    }
+    .rpt-patient-value {
+      font-size: 15px; font-weight: 600; color: #0f1c2e;
+    }
+
+    /* ── SECTION TITLE ── */
+    .rpt-section-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: #94a3b8; margin-bottom: 12px;
+    }
+
+    /* ── STATUS BANNER ── */
+    .rpt-status-banner {
+      display: flex; align-items: center; gap: 16px;
+      padding: 18px 20px; border-radius: 14px; margin-bottom: 24px;
+    }
+    .rpt-status-banner.detected { background:#fff1f2; border:1.5px solid #fecdd3; }
+    .rpt-status-banner.clear    { background:#f0fdf4; border:1.5px solid #bbf7d0; }
+    .rpt-status-icon { font-size: 32px; }
+    .rpt-status-text { font-size: 20px; font-weight: 700; color: #0f1c2e; }
+    .rpt-status-sub  { font-size: 13px; color: #64748b; margin-top: 3px; }
+
+    /* ── CONFIDENCE BAR (report) ── */
+    .rpt-conf-wrap { margin-bottom: 24px; }
+    .rpt-conf-header { display:flex; justify-content:space-between; margin-bottom:8px; }
+    .rpt-conf-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#94a3b8; }
+    .rpt-conf-pct   { font-size:16px; font-weight:700; color:#1d4ed8; font-family:monospace; }
+    .rpt-conf-track { height:10px; background:#e2e8f0; border-radius:99px; overflow:hidden; }
+    .rpt-conf-fill  { height:100%; border-radius:99px; }
+
+    /* ── ALL-CLASS PROBABILITY BARS ── */
+    .rpt-probs-wrap { margin-bottom: 24px; }
+
+    .prob-row {
+      display: flex; align-items: center;
+      gap: 12px; margin-bottom: 10px;
+    }
+    .prob-label {
+      width: 180px; flex-shrink: 0;
+      font-size: 13px; font-weight: 500; color: #334155;
+    }
+    .prob-track {
+      flex: 1; height: 8px;
+      background: #e2e8f0; border-radius: 99px; overflow: hidden;
+    }
+    .prob-fill {
+      height: 100%; border-radius: 99px;
+      transition: width 1s cubic-bezier(0.22,1,0.36,1);
+    }
+    .prob-pct {
+      width: 44px; text-align: right;
+      font-size: 12px; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: #64748b; flex-shrink: 0;
+    }
+    /* top class highlight */
+    .prob-row.top-class .prob-label { color: #1d4ed8; font-weight: 700; }
+    .prob-row.top-class .prob-pct   { color: #1d4ed8; }
+
+    /* ── DETAIL GRID ── */
+    .rpt-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-bottom: 24px;
+    }
+    .rpt-grid-item  { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 16px; }
+    .rpt-grid-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.7px; color:#94a3b8; margin-bottom:5px; }
+    .rpt-grid-value { font-size:17px; font-weight:700; color:#0f1c2e; font-family:'JetBrains Mono',monospace; }
+
+    /* ── VITALS TABLE ── */
+    .rpt-vitals-table { width:100%; border-collapse:collapse; margin-bottom:24px; font-size:14px; }
+    .rpt-vitals-table th { text-align:left; padding:10px 14px; background:#f1f5f9; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; color:#64748b; }
+    .rpt-vitals-table td { padding:12px 14px; border-bottom:1px solid #f1f5f9; color:#0f1c2e; font-weight:500; }
+    .rpt-vitals-table tr:last-child td { border-bottom: none; }
+    .rpt-vitals-table .val-cell { font-family:'JetBrains Mono',monospace; font-weight:700; color:#1d4ed8; }
+
+    /* ── SCAN IMAGE ── */
+    .rpt-scan-wrap { margin-bottom: 24px; }
+    .rpt-scan-img {
+      width:100%; max-height:280px; object-fit:contain;
+      border-radius:12px; border:1.5px solid #e2e8f0;
+      background:#f8fafc; padding:8px; display:block;
+    }
+
+    /* ── DISCLAIMER ── */
+    .rpt-disclaimer {
+      font-size:10.5px; color:#94a3b8; line-height:1.7;
+      padding:14px 16px; background:#f8fafc;
+      border-radius:10px; border:1px solid #e2e8f0;
+      margin-bottom:24px;
+    }
+
+    /* ── ACTIONS ── */
+    .rpt-actions { display:flex; gap:12px; justify-content:flex-end; }
+
+    @media print {
+      .rpt-close, .rpt-actions { display: none !important; }
+      #printReport { border-radius:0; max-height:none; box-shadow:none; padding:32px 40px; }
+    }
+
+    /* ── RESULT PAGE — prob bars (on-page, not in report) ── */
+    .prob-section {
+      margin: 20px 0 8px;
+      text-align: left;
+    }
+    .prob-section-title {
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text-muted); margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="navbar-brand">
+    <div class="navbar-logo">🏥</div>
+    <h1>Healthcare Management System</h1>
+  </div>
+  <div class="navbar-right">
+    <span class="nav-badge">AI Powered</span>
+    <button id="themeToggle">🌙</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PRINT REPORT MODAL
+══════════════════════════════════════ -->
+<div class="report-modal-bg" id="reportModalBg">
+  <div id="printReport">
+
+    <button class="rpt-close" onclick="closeReport()" title="Close">✕</button>
+
+    <!-- Header -->
+    <div class="rpt-header">
+      <div class="rpt-logo">🏥</div>
+      <div>
+        <div class="rpt-org">Healthcare Management System</div>
+        <div class="rpt-sub">AI-Powered Diagnostic Report</div>
+      </div>
+    </div>
+
+    <!-- Report ID + timestamp -->
+    <div class="rpt-id-row">
+      <span>Report ID: <span class="rpt-id-badge" id="rptReportID">—</span></span>
+      <span id="rptTimestamp">—</span>
+    </div>
+
+    <!-- Patient info -->
+    <div class="rpt-patient-row">
+      <div class="rpt-patient-item">
+        <div class="rpt-patient-label">Patient Name</div>
+        <div class="rpt-patient-value" id="rptPatientName">—</div>
+      </div>
+      <div class="rpt-patient-item">
+        <div class="rpt-patient-label">Module</div>
+        <div class="rpt-patient-value" id="rptModule">—</div>
+      </div>
+    </div>
+
+    <!-- Status banner -->
+    <div class="rpt-section-title">Diagnosis</div>
+    <div class="rpt-status-banner" id="rptBanner">
+      <div class="rpt-status-icon" id="rptIcon"></div>
+      <div>
+        <div class="rpt-status-text" id="rptStatus"></div>
+        <div class="rpt-status-sub"  id="rptType"></div>
+      </div>
+    </div>
+
+    <!-- Confidence bar -->
+    <div class="rpt-conf-wrap">
+      <div class="rpt-conf-header">
+        <span class="rpt-conf-label">Model Confidence</span>
+        <span class="rpt-conf-pct" id="rptConfPct">—</span>
+      </div>
+      <div class="rpt-conf-track">
+        <div class="rpt-conf-fill" id="rptConfFill"></div>
+      </div>
+    </div>
+
+    <!-- All-class probability bars -->
+    <div class="rpt-probs-wrap" id="rptProbsWrap">
+      <div class="rpt-section-title">Class Probability Breakdown</div>
+      <div id="rptProbBars"></div>
+    </div>
+
+    <!-- Detail grid -->
+    <div class="rpt-grid" id="rptDetailGrid"></div>
+
+    <!-- Heart vitals table -->
+    <div id="rptVitalsSection" style="display:none;">
+      <div class="rpt-section-title">Patient Vitals Entered</div>
+      <table class="rpt-vitals-table">
+        <thead><tr><th>Parameter</th><th>Value</th><th>Unit</th></tr></thead>
+        <tbody>
+          <tr><td>Age</td>              <td class="val-cell" id="rptAge">—</td>  <td>years</td></tr>
+          <tr><td>Blood Pressure</td>   <td class="val-cell" id="rptBP">—</td>   <td>mmHg</td></tr>
+          <tr><td>Cholesterol</td>      <td class="val-cell" id="rptChol">—</td> <td>mg/dL</td></tr>
+          <tr><td>Resting Heart Rate</td><td class="val-cell" id="rptHR">—</td>  <td>bpm</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Scan image (lung/brain) -->
+    <div id="rptScanSection" style="display:none;">
+      <div class="rpt-section-title">Uploaded Scan Image</div>
+      <div class="rpt-scan-wrap">
+        <img id="rptScanImg" class="rpt-scan-img" src="" alt="Scan Image">
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="rpt-disclaimer">
+      ⚠️ <strong>Important Notice:</strong> This report is generated by an AI-based diagnostic tool and is intended for informational purposes only. It does not constitute a medical diagnosis, clinical advice, or a substitute for professional medical evaluation. Please consult a qualified and licensed healthcare professional before making any medical decisions based on this report.
+    </div>
+
+    <!-- Actions -->
+    <div class="rpt-actions">
+      <button class="btn btn-outline" onclick="closeReport()" style="padding:10px 24px;font-size:14px;">Close</button>
+      <button class="btn" onclick="window.print()" style="padding:10px 24px;font-size:14px;">🖨️ Print / Save PDF</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN RESULT PAGE
+══════════════════════════════════════ -->
+<div class="page-wrapper">
+  <div class="result-page">
+
+    <div class="form-page-header">
+      <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+      <h1>Prediction Result</h1>
+      {% if patient_name %}
+        <p>Patient: <strong>{{ patient_name }}</strong></p>
+      {% else %}
+        <p>AI analysis complete</p>
+      {% endif %}
+    </div>
+
+    <div class="result-card">
+
+      {% if "No" in result.status or "Low" in result.status %}
+        <div class="result-icon negative">✅</div>
+      {% else %}
+        <div class="result-icon positive">⚠️</div>
+      {% endif %}
+
+      <div class="result-status">{{ result.status }}</div>
+
+      <div class="result-divider"></div>
+
+      <!-- Confidence + type -->
+      <div class="result-meta">
+        {% if result.type and result.type != "No Cardiovascular Risk" %}
+        <div class="result-meta-item">
+          <div class="result-meta-label">Type</div>
+          <div class="result-meta-value">{{ result.type }}</div>
+        </div>
+        {% endif %}
+        <div class="result-meta-item">
+          <div class="result-meta-label">Confidence</div>
+          <div class="result-meta-value">{{ result.confidence }}</div>
+        </div>
+      </div>
+
+      <!-- Main confidence bar -->
+      <div class="conf-bar-section">
+        <div class="conf-bar-header">
+          <span class="conf-bar-label">Model Confidence</span>
+          <span class="conf-bar-pct" id="confPct">—</span>
+        </div>
+        <div class="conf-bar-track">
+          <div class="conf-bar-fill" id="confBar"></div>
+        </div>
+        <div class="conf-bar-ticks">
+          <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+        </div>
+      </div>
+
+      <!-- ALL-CLASS PROBABILITY BARS (on result page) -->
+      {% if result.all_probs %}
+      <div class="prob-section">
+        <div class="prob-section-title">Class Probability Breakdown</div>
+        {% set top_class = result.type %}
+        {% for class_name, prob_val in result.all_probs.items() %}
+        <div class="prob-row {% if class_name == top_class %}top-class{% endif %}"
+             data-pct="{{ prob_val }}">
+          <div class="prob-label">{{ class_name }}</div>
+          <div class="prob-track">
+            <div class="prob-fill" style="width:0%; background: {% if class_name == top_class %}linear-gradient(90deg,var(--accent),var(--accent-2)){% else %}var(--border){% endif %}"></div>
+          </div>
+          <div class="prob-pct">{{ prob_val }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Action buttons -->
+      <div style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap;">
+        <a href="/dashboard" class="btn btn-outline" style="flex:1; min-width:140px;">← New Analysis</a>
+        <button class="btn" style="flex:1; min-width:140px;" onclick="openReport()">🖨️ Print Report</button>
+      </div>
+
+      <div class="result-disclaimer">
+        ⚠️ This is an AI-based prediction only and does not constitute a medical diagnosis. Please consult a qualified healthcare professional for clinical evaluation.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+  // ── Values from Flask/Jinja ──
+  const resultStatus     = {{ result.status     | tojson }};
+  const resultType       = {{ result.type       | tojson }};
+  const resultConfidence = {{ result.confidence | tojson }};
+  const patientName      = {{ patient_name      | tojson }};
+
+  // all_probs: { "ClassName": "72.3", ... } — empty dict for heart (uses predict_proba)
+  const allProbs = {{ result.all_probs | tojson }};
+
+  // ── Confidence percentage (handle "N/A" for heart) ──
+  let pct = parseFloat(resultConfidence);
+  if (isNaN(pct)) pct = 0;
+  if (pct <= 1.0) pct = pct * 100;
+  pct = Math.min(Math.max(Math.round(pct), 0), 100);
+  const hasConf = resultConfidence !== 'N/A';
+
+  // ── Generate unique Report ID ──
+  // Format: HMS-YYYYMMDD-XXXX  (XXXX = random 4-digit number)
+  function generateReportID() {
+    const now    = new Date();
+    const yyyy   = now.getFullYear();
+    const mm     = String(now.getMonth() + 1).padStart(2, '0');
+    const dd     = String(now.getDate()).padStart(2, '0');
+    const rand   = String(Math.floor(1000 + Math.random() * 9000));
+    return `HMS-${yyyy}${mm}${dd}-${rand}`;
+  }
+
+  const reportID = generateReportID();
+
+  // ── Main page confidence bar ──
+  const bar      = document.getElementById('confBar');
+  const pctLabel = document.getElementById('confPct');
+
+  function getBarColor(p) {
+    if (p >= 80) return 'linear-gradient(90deg,#059669,#34d399)';
+    if (p >= 60) return 'linear-gradient(90deg,#d97706,#fbbf24)';
+    if (p >  0)  return 'linear-gradient(90deg,#e11d48,#fb7185)';
+    return 'var(--border)';
+  }
+
+  bar.style.background = getBarColor(pct);
+
+  window.addEventListener('load', () => {
+    // Animate main confidence bar
+    setTimeout(() => {
+      bar.style.width = pct + '%';
+      if (!hasConf) { pctLabel.textContent = 'N/A'; }
+      else {
+        let cur = 0, step = pct / 40;
+        const t = setInterval(() => {
+          cur = Math.min(cur + step, pct);
+          pctLabel.textContent = Math.round(cur) + '%';
+          if (cur >= pct) clearInterval(t);
+        }, 20);
+      }
+    }, 300);
+
+    // Animate all-class probability bars on result page
+    setTimeout(() => {
+      document.querySelectorAll('.prob-row').forEach(row => {
+        const fillEl = row.querySelector('.prob-fill');
+        const val    = parseFloat(row.dataset.pct) || 0;
+        fillEl.style.width = val + '%';
+      });
+    }, 500);
+  });
+
+  // ── Report modal ──
+  function openReport() {
+    const module = sessionStorage.getItem('report_module') || 'unknown';
+    const isDetected = !resultStatus.toLowerCase().includes('no') &&
+                       !resultStatus.toLowerCase().includes('low');
+
+    // Report ID + timestamp
+    document.getElementById('rptReportID').textContent = reportID;
+    document.getElementById('rptTimestamp').textContent =
+      new Date().toLocaleString('en-IN', {
+        day:'2-digit', month:'long', year:'numeric',
+        hour:'2-digit', minute:'2-digit'
+      });
+
+    // Patient name
+    document.getElementById('rptPatientName').textContent =
+      patientName && patientName.trim() !== '' ? patientName : 'Not provided';
+
+    // Module label
+    const moduleLabels = {
+      heart: 'Heart Disease Prediction',
+      lung:  'Lung Cancer Detection',
+      brain: 'Brain Tumor Detection'
+    };
+    document.getElementById('rptModule').textContent =
+      moduleLabels[module] || module;
+
+    // Status banner
+    const banner = document.getElementById('rptBanner');
+    banner.className = 'rpt-status-banner ' + (isDetected ? 'detected' : 'clear');
+    document.getElementById('rptIcon').textContent   = isDetected ? '⚠️' : '✅';
+    document.getElementById('rptStatus').textContent = resultStatus;
+    document.getElementById('rptType').textContent   =
+      resultType ? 'Type: ' + resultType : 'No abnormality detected';
+
+    // Confidence bar in report
+    const confDisplay = hasConf ? pct + '%' : 'N/A';
+    document.getElementById('rptConfPct').textContent  = confDisplay;
+    document.getElementById('rptConfFill').style.width = pct + '%';
+    document.getElementById('rptConfFill').style.background = getBarColor(pct);
+
+    // ── All-class probability bars in report ──
+    const probBarsEl = document.getElementById('rptProbBars');
+    probBarsEl.innerHTML = '';
+
+    // Colour palette for each bar (cycles through)
+    const barColors = [
+      'linear-gradient(90deg,#1d4ed8,#06b6d4)',
+      'linear-gradient(90deg,#7c3aed,#ec4899)',
+      'linear-gradient(90deg,#059669,#34d399)',
+      'linear-gradient(90deg,#d97706,#fbbf24)',
+    ];
+
+    if (allProbs && Object.keys(allProbs).length > 0) {
+      document.getElementById('rptProbsWrap').style.display = 'block';
+      const entries = Object.entries(allProbs);
+      // Find top class name for highlight
+      const topEntry = entries.reduce((a, b) => parseFloat(a[1]) >= parseFloat(b[1]) ? a : b);
+
+      entries.forEach(([name, val], idx) => {
+        const numVal = parseFloat(val) || 0;
+        const isTop  = name === topEntry[0];
+        const color  = isTop
+          ? 'linear-gradient(90deg,#1d4ed8,#06b6d4)'
+          : barColors[idx % barColors.length];
+
+        probBarsEl.innerHTML += `
+          <div class="prob-row ${isTop ? 'top-class' : ''}" style="margin-bottom:12px;">
+            <div class="prob-label">${name}</div>
+            <div class="prob-track" style="height:10px;">
+              <div class="prob-fill" style="width:${numVal}%; background:${color};"></div>
+            </div>
+            <div class="prob-pct">${numVal.toFixed(1)}%</div>
+          </div>`;
+      });
+    } else {
+      document.getElementById('rptProbsWrap').style.display = 'none';
+    }
+
+    // Detail grid
+    const grid = document.getElementById('rptDetailGrid');
+    grid.innerHTML = '';
+    const details = [
+      { label: 'Status',     value: isDetected ? 'Detected' : 'Clear' },
+      { label: 'Confidence', value: confDisplay },
+    ];
+    if (resultType && resultType !== 'No Cardiovascular Risk') {
+      details.push({ label: 'Type / Class', value: resultType });
+    }
+    details.push({ label: 'Model', value: module === 'heart' ? 'Random Forest' : 'MobileNetV2' });
+
+    details.forEach(d => {
+      grid.innerHTML += `
+        <div class="rpt-grid-item">
+          <div class="rpt-grid-label">${d.label}</div>
+          <div class="rpt-grid-value">${d.value}</div>
+        </div>`;
+    });
+
+    // Heart → vitals table | Lung/Brain → scan image
+    if (module === 'heart') {
+      document.getElementById('rptVitalsSection').style.display = 'block';
+      document.getElementById('rptScanSection').style.display   = 'none';
+      document.getElementById('rptAge').textContent  = sessionStorage.getItem('report_age')         || '—';
+      document.getElementById('rptBP').textContent   = sessionStorage.getItem('report_bp')          || '—';
+      document.getElementById('rptChol').textContent = sessionStorage.getItem('report_cholesterol')  || '—';
+      document.getElementById('rptHR').textContent   = sessionStorage.getItem('report_heart_rate')  || '—';
+    } else {
+      document.getElementById('rptVitalsSection').style.display = 'none';
+      const img = sessionStorage.getItem('report_image');
+      if (img) {
+        document.getElementById('rptScanSection').style.display = 'block';
+        document.getElementById('rptScanImg').src = img;
+      } else {
+        document.getElementById('rptScanSection').style.display = 'none';
+      }
+    }
+
+    document.getElementById('reportModalBg').classList.add('open');
+  }
+
+  function closeReport() {
+    document.getElementById('reportModalBg').classList.remove('open');
+  }
+
+  // Close on backdrop click
+  document.getElementById('reportModalBg').addEventListener('click', function(e) {
+    if (e.target === this) closeReport();
+  });
+</script>
+</body>
+</html>

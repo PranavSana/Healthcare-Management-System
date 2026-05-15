@@ -1,0 +1,23 @@
+# Virtual environment
+venv/
+
+# Model files (too large)
+models/
+
+# Uploaded scan images
+static/uploads/
+
+# Dataset images
+models/brain_tumor/Data/
+models/lung_cancer/Data/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Mac junk
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/

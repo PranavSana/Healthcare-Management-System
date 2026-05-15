@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lung Cancer — Healthcare Management System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="navbar-brand">
+    <div class="navbar-logo">🏥</div>
+    <h1>Healthcare Management System</h1>
+  </div>
+  <div class="navbar-right">
+    <span class="nav-badge">AI Powered</span>
+    <button id="themeToggle">🌙</button>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="loading-spinner"></div>
+    <div class="loading-title">Analyzing CT Scan</div>
+    <div class="loading-sub">Running deep learning model...</div>
+    <div class="loading-steps">
+      <div class="loading-step" id="step1">⬜ Preprocessing image</div>
+      <div class="loading-step" id="step2">⬜ Running MobileNetV2</div>
+      <div class="loading-step" id="step3">⬜ Classifying result</div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+  <div class="form-page">
+
+    <div class="form-page-header">
+      <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+      <h1>🫁 Lung Cancer Detection</h1>
+      <p>Upload a CT scan image for deep learning analysis of pulmonary abnormalities.</p>
+    </div>
+
+    <div class="form-card">
+      <form method="post" enctype="multipart/form-data" id="uploadForm">
+
+        <!-- PATIENT NAME -->
+        <div class="form-group">
+          <label class="form-label">Patient Name</label>
+          <input class="form-input" type="text" name="patient_name" id="patient_name"
+                 placeholder="e.g. John Smith" maxlength="80">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">CT Scan Image</label>
+          <div class="file-upload-area" id="dropZone">
+            <input type="file" name="ct_image" accept="image/*" required id="ctFile">
+            <div class="upload-icon" id="uploadIcon">🫁</div>
+            <div class="upload-text" id="uploadText">Drop your CT scan here</div>
+            <div class="upload-hint" id="uploadHint">or click to browse — PNG, JPG, JPEG supported</div>
+            <div class="file-name-display" id="fileName"></div>
+          </div>
+        </div>
+
+        <!-- IMAGE PREVIEW -->
+        <div class="img-preview-wrap" id="previewWrap">
+          <label class="form-label">Preview</label>
+          <div class="img-preview-box">
+            <img id="imgPreview" src="" alt="CT Scan Preview">
+            <button type="button" class="img-remove-btn" id="removeBtn">✕ Remove</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-full" id="submitBtn" disabled>
+          Analyze CT Scan →
+        </button>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+  const fileInput       = document.getElementById('ctFile');
+  const fileNameDisplay = document.getElementById('fileName');
+  const dropZone        = document.getElementById('dropZone');
+  const previewWrap     = document.getElementById('previewWrap');
+  const imgPreview      = document.getElementById('imgPreview');
+  const removeBtn       = document.getElementById('removeBtn');
+  const submitBtn       = document.getElementById('submitBtn');
+  const uploadIcon      = document.getElementById('uploadIcon');
+  const uploadText      = document.getElementById('uploadText');
+  const uploadHint      = document.getElementById('uploadHint');
+
+  let base64Image = null;
+
+  function showPreview(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      base64Image = e.target.result;
+      imgPreview.src = base64Image;
+      previewWrap.style.display = 'block';
+      fileNameDisplay.textContent = '✓ ' + file.name;
+      uploadIcon.style.display = 'none';
+      uploadText.textContent = 'Image selected';
+      uploadHint.style.display = 'none';
+      submitBtn.disabled = false;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearFile() {
+    fileInput.value = '';
+    imgPreview.src = '';
+    base64Image = null;
+    previewWrap.style.display = 'none';
+    fileNameDisplay.textContent = '';
+    uploadIcon.style.display = 'block';
+    uploadText.textContent = 'Drop your CT scan here';
+    uploadHint.style.display = 'block';
+    submitBtn.disabled = true;
+  }
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) showPreview(fileInput.files[0]);
+  });
+
+  removeBtn.addEventListener('click', clearFile);
+
+  ['dragover','dragenter'].forEach(e => dropZone.addEventListener(e, (ev) => {
+    ev.preventDefault(); dropZone.classList.add('dragover');
+  }));
+  ['dragleave'].forEach(e => dropZone.addEventListener(e, () => {
+    dropZone.classList.remove('dragover');
+  }));
+  dropZone.addEventListener('drop', (ev) => {
+    ev.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = ev.dataTransfer.files[0];
+    if (file) { fileInput.files = ev.dataTransfer.files; showPreview(file); }
+  });
+
+  document.getElementById('uploadForm').addEventListener('submit', function() {
+    sessionStorage.setItem('report_module', 'lung');
+    sessionStorage.setItem('report_image',  base64Image || '');
+    sessionStorage.removeItem('report_age');
+
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.style.display = 'flex';
+    submitBtn.disabled = true;
+    const labels = ['✅ Preprocessing image','✅ Running MobileNetV2','✅ Classifying result'];
+    ['step1','step2','step3'].forEach((id, i) => {
+      setTimeout(() => { document.getElementById(id).textContent = labels[i]; }, [400,1200,2200][i]);
+    });
+  });
+</script>
+</body>
+</html>
