@@ -1,15 +1,25 @@
 # Virtual environment
 venv/
 
-# Model files (too large)
-models/
+# Image files and datasets
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.dcm
 
-# Uploaded scan images
+# Binary data folders (contain images)
+models/brain_tumor/binary_data/
+models/brain_tumor/Data/
+models/lung_cancer/binary_data/
+models/lung_cancer/Data/
 static/uploads/
 
-# Dataset images
-models/brain_tumor/Data/
-models/lung_cancer/Data/
+# Large model files
+*.h5
+*.keras
 
 # Python cache
 __pycache__/
