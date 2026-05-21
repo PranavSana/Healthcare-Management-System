@@ -12,9 +12,7 @@ venv/
 
 # Binary data folders (contain images)
 models/brain_tumor/binary_data/
-models/brain_tumor/Data/
 models/lung_cancer/binary_data/
-models/lung_cancer/Data/
 static/uploads/
 
 # Large model files
